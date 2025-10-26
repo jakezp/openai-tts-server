@@ -1,28 +1,39 @@
-# Speaches
+# Speaches - OpenAI-Compatible TTS/STT Server
 
-`speaches` is an OpenAI API-compatible server supporting streaming transcription, translation, and speech generation. Speech-to-Text is powered by [faster-whisper](https://github.com/SYSTRAN/faster-whisper) and for Text-to-Speech [piper](https://github.com/rhasspy/piper), [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M), and [StyleTTS2](https://github.com/yl4579/StyleTTS2) are used. This project aims to be Ollama, but for TTS/STT models.
+`speaches` is an OpenAI API-compatible server supporting streaming transcription, translation, and speech generation. This project aims to be **Ollama for TTS/STT models** - making it easy to run multiple speech models with a unified API.
 
-See the documentation for installation instructions and usage: [speaches.ai](https://speaches.ai/)
+## Powered By
 
-## Features:
+- **Speech-to-Text**: [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
+- **Text-to-Speech**: 
+  - [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) - #1 in TTS Arena
+  - [StyleTTS2](https://github.com/yl4579/StyleTTS2) - High-quality neural TTS with voice cloning
+  - [Piper](https://github.com/rhasspy/piper) - Fast, lightweight TTS
 
-- OpenAI API compatible. All tools and SDKs that work with OpenAI's API should work with `speaches`.
-- Audio generation (chat completions endpoint) | [OpenAI Documentation](https://platform.openai.com/docs/guides/realtime)
-  - Generate a spoken audio summary of a body of text (text in, audio out)
-  - Perform sentiment analysis on a recording (audio in, text out)
-  - Async speech to speech interactions with a model (audio in, audio out)
-- Streaming support (transcription is sent via SSE as the audio is transcribed. You don't need to wait for the audio to fully be transcribed before receiving it).
-- Dynamic model loading / offloading. Just specify which model you want to use in the request and it will be loaded automatically. It will then be unloaded after a period of inactivity.
-- Text-to-Speech via:
-  - **Kokoro** - Ranked #1 in the [TTS Arena](https://huggingface.co/spaces/Pendrokar/TTS-Spaces-Arena)
-  - **StyleTTS2** - High-quality neural TTS with voice cloning support (24kHz, 18+ languages, 14 preset voices)
-  - **Piper** - Fast, lightweight TTS
-- GPU and CPU support.
-- [Deployable via Docker Compose / Docker](https://speaches.ai/installation/)
-- [Realtime API](https://speaches.ai/usage/realtime-api)
-- [Highly configurable](https://speaches.ai/configuration/)
+For full documentation, visit: [speaches.ai](https://speaches.ai/)
 
-Please create an issue if you find a bug, have a question, or a feature suggestion.
+## Features
+
+### Core Capabilities
+
+- **OpenAI API Compatible** - All tools and SDKs that work with OpenAI's API work with Speaches
+- **Streaming Support** - Real-time transcription via SSE (no waiting for full audio processing)
+- **Dynamic Model Management** - Automatic model loading/unloading based on usage
+- **GPU & CPU Support** - Run on your preferred hardware
+- **Docker Ready** - Easy deployment via [Docker Compose](https://speaches.ai/installation/)
+- **Highly Configurable** - Extensive [configuration options](https://speaches.ai/configuration/)
+
+### Audio Generation ([Realtime API](https://speaches.ai/usage/realtime-api))
+
+- Text → Audio: Generate spoken summaries
+- Audio → Text: Transcription and sentiment analysis
+- Audio → Audio: Speech-to-speech model interactions
+
+### Text-to-Speech Engines
+
+- **Kokoro** - Ranked #1 in the [TTS Arena](https://huggingface.co/spaces/Pendrokar/TTS-Spaces-Arena)
+- **StyleTTS2** - 24kHz high-quality synthesis, voice cloning, 18+ languages, 14 preset voices
+- **Piper** - Fast and lightweight TTS
 
 ## Demos
 
@@ -60,3 +71,35 @@ curl -X POST http://localhost:8000/v1/audio/speech \
 **Voice Cloning**: Use `"voice": "file:///path/to/reference.wav"` to clone any voice.
 
 **Custom Parameters**: Adjust `alpha` (0-1), `beta` (0-1), and `diffusion_steps` (1-20) for fine control.
+
+## Attribution
+
+This project builds upon and integrates several excellent open-source projects:
+
+- **[Speaches](https://github.com/speaches-ai/speaches)** - The foundation of this OpenAI-compatible TTS/STT server (MIT License)
+- **[StyleTTS2](https://github.com/yl4579/StyleTTS2)** - High-quality neural text-to-speech synthesis with style modeling (MIT License)
+- **[StyleTTS2 HuggingFace Space](https://huggingface.co/spaces/Pendrokar/style-tts-2)** - Reference implementation and inspiration for integration
+- **[faster-whisper](https://github.com/SYSTRAN/faster-whisper)** - Fast speech-to-text transcription
+- **[Kokoro](https://huggingface.co/hexgrad/Kokoro-82M)** - State-of-the-art TTS model
+- **[Piper](https://github.com/rhasspy/piper)** - Lightweight TTS engine
+
+### License
+
+This project is a combination and integration of the above works. All original projects retain their respective licenses (primarily MIT License). This derivative work is provided as-is for research and development purposes.
+
+**We express our gratitude to all the original authors and contributors of these projects.** Their excellent work makes this integration possible.
+
+## Support & Issues
+
+Please create an issue if you:
+- Find a bug
+- Have a question
+- Want to suggest a feature
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues or pull requests.
+
+---
+
+**Note**: This is a community integration project combining multiple open-source TTS/STT engines into a unified OpenAI-compatible API. It is not affiliated with OpenAI.
