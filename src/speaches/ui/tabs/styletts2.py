@@ -35,7 +35,7 @@ LANGUAGE_OPTIONS = [
     ['Turkish (Non-native)', 'tr'],
 ]
 
-DEFAULT_MODEL_ID = "yl4579/StyleTTS2-LibriTTS"
+DEFAULT_MODEL_ID = "jakezp/StyleTTS2-LibriTTS"
 
 
 def create_styletts2_tab(config: Config) -> None:
@@ -58,27 +58,30 @@ def create_styletts2_tab(config: Config) -> None:
             raise gr.Error("Text must be <50k characters")
         
         # Get the StyleTTS2 model manager
-        model_manager = executor_registry.executor_dict["styletts2"].model_manager  # type: ignore
+        styletts2_executor = executor_registry._styletts2_executor
+        model_manager = styletts2_executor.model_manager
         assert isinstance(model_manager, StyleTTS2ModelManager)
         
-        # Load the model
-        model_wrapper = model_manager.load_model(DEFAULT_MODEL_ID)
-        model = model_wrapper.model
-        assert model is not None
-        
-        # Get voice style
-        voice_style = model_manager.get_voice_style(model, voice)
-        
-        # Synthesize
-        audio = model.synthesize(
-            text=text,
-            ref_style=voice_style,
-            lang=lang,
-            alpha=0.3,
-            beta=0.7,
-            diffusion_steps=diffusion_steps,
-            embedding_scale=1.0,
-        )
+        # Load and use the model with context manager
+        try:
+            with model_manager.load_model(DEFAULT_MODEL_ID) as model:
+                # Get voice style
+                voice_style = model_manager.get_voice_style(model, voice)
+                
+                # Synthesize
+                audio, phonemes = model.synthesize(
+                    text=text,
+                    ref_style=voice_style,
+                    lang=lang,
+                    alpha=0.3,
+                    beta=0.7,
+                    diffusion_steps=diffusion_steps,
+                    embedding_scale=1.0,
+                )
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise gr.Error(f"Failed to load StyleTTS2 model: {str(e)}")
         
         return (24000, audio)
     
@@ -102,27 +105,30 @@ def create_styletts2_tab(config: Config) -> None:
             gr.Warning("WARNING: You entered short text with high embedding scale, you may get static!")
         
         # Get the StyleTTS2 model manager
-        model_manager = executor_registry.executor_dict["styletts2"].model_manager  # type: ignore
+        styletts2_executor = executor_registry._styletts2_executor
+        model_manager = styletts2_executor.model_manager
         assert isinstance(model_manager, StyleTTS2ModelManager)
         
-        # Load the model
-        model_wrapper = model_manager.load_model(DEFAULT_MODEL_ID)
-        model = model_wrapper.model
-        assert model is not None
-        
-        # Compute custom voice style
-        voice_style = model_manager.compute_custom_voice_style(model, voice_file)
-        
-        # Synthesize
-        audio = model.synthesize(
-            text=text,
-            ref_style=voice_style,
-            lang="en-us",  # Default to English for voice cloning
-            alpha=alpha,
-            beta=beta,
-            diffusion_steps=diffusion_steps,
-            embedding_scale=embedding_scale,
-        )
+        # Load and use the model with context manager
+        try:
+            with model_manager.load_model(DEFAULT_MODEL_ID) as model:
+                # Compute custom voice style
+                voice_style = model_manager.compute_custom_voice_style(model, voice_file)
+                
+                # Synthesize
+                audio, phonemes = model.synthesize(
+                    text=text,
+                    ref_style=voice_style,
+                    lang="en-us",  # Default to English for voice cloning
+                    alpha=alpha,
+                    beta=beta,
+                    diffusion_steps=diffusion_steps,
+                    embedding_scale=embedding_scale,
+                )
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise gr.Error(f"Failed to load StyleTTS2 model: {str(e)}")
         
         return (24000, audio)
 
@@ -138,27 +144,30 @@ def create_styletts2_tab(config: Config) -> None:
             raise gr.Error("Text must be <150k characters")
         
         # Get the StyleTTS2 model manager
-        model_manager = executor_registry.executor_dict["styletts2"].model_manager  # type: ignore
+        styletts2_executor = executor_registry._styletts2_executor
+        model_manager = styletts2_executor.model_manager
         assert isinstance(model_manager, StyleTTS2ModelManager)
         
-        # Load the model
-        model_wrapper = model_manager.load_model(DEFAULT_MODEL_ID)
-        model = model_wrapper.model
-        assert model is not None
-        
-        # Use a random style (m-us-1 as default)
-        voice_style = model_manager.get_voice_style(model, "m-us-1")
-        
-        # Synthesize
-        audio = model.synthesize(
-            text=text,
-            ref_style=voice_style,
-            lang="en-us",
-            alpha=0.3,
-            beta=0.7,
-            diffusion_steps=diffusion_steps,
-            embedding_scale=1.0,
-        )
+        # Load and use the model with context manager
+        try:
+            with model_manager.load_model(DEFAULT_MODEL_ID) as model:
+                # Use a random style (male_gavin as default)
+                voice_style = model_manager.get_voice_style(model, "male_gavin")
+                
+                # Synthesize
+                audio, phonemes = model.synthesize(
+                    text=text,
+                    ref_style=voice_style,
+                    lang="en-us",
+                    alpha=0.3,
+                    beta=0.7,
+                    diffusion_steps=diffusion_steps,
+                    embedding_scale=1.0,
+                )
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise gr.Error(f"Failed to load StyleTTS2 model: {str(e)}")
         
         return (24000, audio)
 
@@ -190,7 +199,7 @@ High-quality neural text-to-speech with style control and voice cloning capabili
                             choices=[v.name for v in PRESET_VOICES],
                             label="Voice",
                             info="Select a preset voice",
-                            value="m-us-2",
+                            value="female_anna",
                         )
                         mv_lang = gr.Dropdown(
                             choices=LANGUAGE_OPTIONS,
@@ -230,7 +239,6 @@ High-quality neural text-to-speech with style control and voice cloning capabili
                         )
                         vc_voice = gr.Audio(
                             label="Voice Sample",
-                            info="Upload a voice sample (max 300 seconds)",
                             type="filepath",
                             max_length=300,
                         )

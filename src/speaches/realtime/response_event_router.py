@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from contextlib import contextmanager
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generator
 
 import openai
 from openai.types.beta.realtime.error_event import Error
@@ -98,7 +98,7 @@ class ResponseHandler:
         self.task: asyncio.Task[None] | None = None
 
     @contextmanager
-    def add_output_item[T: ServerConversationItem](self, item: T) -> Generator[T, None, None]:
+    def add_output_item(self, item: ServerConversationItem) -> Generator[ServerConversationItem, None, None]:
         self.response.output.append(item)
         self.pubsub.publish_nowait(ResponseOutputItemAddedEvent(response_id=self.id, item=item))
         yield item
@@ -109,9 +109,9 @@ class ResponseHandler:
         self.pubsub.publish_nowait(ResponseDoneEvent(response=self.response))
 
     @contextmanager
-    def add_item_content[T: ConversationItemContentText | ConversationItemContentAudio](
-        self, item: ConversationItemMessage, content: T
-    ) -> Generator[T, None, None]:
+    def add_item_content(
+        self, item: ConversationItemMessage, content: ConversationItemContentText | ConversationItemContentAudio
+    ) -> Generator[ConversationItemContentText | ConversationItemContentAudio, None, None]:
         item.content.append(content)
         self.pubsub.publish_nowait(
             ResponseContentPartAddedEvent(response_id=self.id, item_id=item.id, part=content.to_part())

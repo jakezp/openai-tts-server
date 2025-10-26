@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, TypeAlias
 
 from openai.types.beta.realtime import (
     ConversationCreatedEvent as OpenAIConversationCreatedEvent,
@@ -88,7 +88,7 @@ class PartAudio(BaseModel):
     transcript: str
 
 
-type Part = PartText | PartAudio
+Part: TypeAlias = PartText | PartAudio
 
 
 # TODO: document that this type is fully custom and doesn't exist in the OpenAI API
@@ -125,7 +125,7 @@ class ConversationItemContentInputText(BaseModel):
     text: str
 
 
-type ConversationItemContent = (
+ConversationItemContent: TypeAlias = (
     ConversationItemContentInputText
     | ConversationItemContentInputAudio
     | ConversationItemContentItemReference
@@ -170,8 +170,8 @@ class ConversationItemFunctionCallOutput(BaseConversationItem):
 
 
 # NOTE: server can't generate "function_call_output"
-type ServerConversationItem = ConversationItemMessage | ConversationItemFunctionCall
-type ConversationItem = ConversationItemMessage | ConversationItemFunctionCall | ConversationItemFunctionCallOutput
+ServerConversationItem: TypeAlias = ConversationItemMessage | ConversationItemFunctionCall
+ConversationItem: TypeAlias = ConversationItemMessage | ConversationItemFunctionCall | ConversationItemFunctionCallOutput
 
 
 class ConversationItemCreateEvent(BaseModel):
@@ -240,8 +240,8 @@ class InputAudioTranscription(BaseModel):
     language: str | None = None
 
 
-type AudioFormat = Literal["pcm16", "g711_ulaw", "g711_alaw"]
-type Modality = Literal["text", "audio"]
+AudioFormat: TypeAlias = Literal["pcm16", "g711_ulaw", "g711_alaw"]
+Modality: TypeAlias = Literal["text", "audio"]
 
 
 class Tool(BaseModel):
@@ -265,7 +265,7 @@ class NamedToolChoice(BaseModel):
     type: Literal["function"] = "function"
 
 
-type ToolChoice = Literal["none", "auto", "required"] | NamedToolChoice
+ToolChoice: TypeAlias = Literal["none", "auto", "required"] | NamedToolChoice
 
 
 class Response(BaseModel):
@@ -497,24 +497,24 @@ class ResponseFunctionCallArgumentsDoneEvent(OpenAIResponseFunctionCallArguments
     output_index: int = 0
 
 
-type SessionClientEvent = SessionUpdateEvent
-type SessionServerEvent = SessionCreatedEvent | SessionUpdatedEvent
+SessionClientEvent: TypeAlias = SessionUpdateEvent
+SessionServerEvent: TypeAlias = SessionCreatedEvent | SessionUpdatedEvent
 
 
-type InputAudioBufferClientEvent = (
+InputAudioBufferClientEvent: TypeAlias = (
     InputAudioBufferAppendEvent | InputAudioBufferCommitEvent | InputAudioBufferClearEvent
 )
 
-type InputAudioBufferServerEvent = (
+InputAudioBufferServerEvent: TypeAlias = (
     InputAudioBufferCommittedEvent
     | InputAudioBufferClearedEvent
     | InputAudioBufferSpeechStartedEvent
     | InputAudioBufferSpeechStoppedEvent
 )
 
-type ConversationClientEvent = ConversationItemCreateEvent | ConversationItemTruncateEvent | ConversationItemDeleteEvent
+ConversationClientEvent: TypeAlias = ConversationItemCreateEvent | ConversationItemTruncateEvent | ConversationItemDeleteEvent
 
-type ConversationServerEvent = (
+ConversationServerEvent: TypeAlias = (
     ConversationCreatedEvent
     | ConversationItemCreatedEvent
     | ConversationItemInputAudioTranscriptionCompletedEvent
@@ -524,23 +524,23 @@ type ConversationServerEvent = (
 )
 
 
-type ResponseClientEvent = ResponseCreateEvent | ResponseCancelEvent
+ResponseClientEvent: TypeAlias = ResponseCreateEvent | ResponseCancelEvent
 
-type ResponseContentDeltaEvent = (
+ResponseContentDeltaEvent: TypeAlias = (
     ResponseTextDeltaEvent
     | ResponseAudioTranscriptDeltaEvent
     | ResponseAudioDeltaEvent
     | ResponseFunctionCallArgumentsDeltaEvent
 )
 
-type ResponseContentDoneEvent = (
+ResponseContentDoneEvent: TypeAlias = (
     ResponseTextDoneEvent
     | ResponseAudioTranscriptDoneEvent
     | ResponseAudioDoneEvent
     | ResponseFunctionCallArgumentsDoneEvent
 )
 
-type ResponseServerEvent = (
+ResponseServerEvent: TypeAlias = (
     ResponseCreatedEvent
     | ResponseOutputItemAddedEvent
     | ResponseContentPartAddedEvent
@@ -635,6 +635,6 @@ class PartialMessageEvent(BaseModel):
     total_fragments: int
 
 
-type MessageFragment = FullMessageEvent | PartialMessageEvent
+MessageFragment: TypeAlias = FullMessageEvent | PartialMessageEvent
 
 Event = ClientEvent | ServerEvent

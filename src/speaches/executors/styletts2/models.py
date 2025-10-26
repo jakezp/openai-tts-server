@@ -12,14 +12,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils import weight_norm, remove_weight_norm, spectral_norm
 
-from Utils.ASR.models import ASRCNN
-from Utils.JDC.model import JDCNet
+from speaches.executors.styletts2.utils.asr.models import ASRCNN
+from speaches.executors.styletts2.utils.jdc.model import JDCNet
 
-from Modules.diffusion.sampler import KDiffusion, LogNormalDistribution
-from Modules.diffusion.modules import Transformer1d, StyleTransformer1d
-from Modules.diffusion.diffusion import AudioDiffusionConditional
+from speaches.executors.styletts2.modules.diffusion.sampler import KDiffusion, LogNormalDistribution
+from speaches.executors.styletts2.modules.diffusion.modules import Transformer1d, StyleTransformer1d
+from speaches.executors.styletts2.modules.diffusion.diffusion import AudioDiffusionConditional
 
-from Modules.discriminators import (
+from speaches.executors.styletts2.modules.discriminators import (
     MultiPeriodDiscriminator,
     MultiResSpecDiscriminator,
     WavLMDiscriminator,
@@ -754,7 +754,7 @@ def build_model(args, text_aligner, pitch_extractor, bert):
     assert args.decoder.type in ["istftnet", "hifigan"], "Decoder type unknown"
 
     if args.decoder.type == "istftnet":
-        from Modules.istftnet import Decoder
+        from speaches.executors.styletts2.modules.istftnet import Decoder
 
         decoder = Decoder(
             dim_in=args.hidden_dim,
@@ -769,7 +769,7 @@ def build_model(args, text_aligner, pitch_extractor, bert):
             gen_istft_hop_size=args.decoder.gen_istft_hop_size,
         )
     else:
-        from Modules.hifigan import Decoder
+        from speaches.executors.styletts2.modules.hifigan import Decoder
 
         decoder = Decoder(
             dim_in=args.hidden_dim,

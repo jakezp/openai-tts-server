@@ -50,14 +50,20 @@ class StyleTTS2ModelVoice(BaseModel):
 
 # Preset voices for StyleTTS2-LibriTTS model
 PRESET_VOICES = [
-    StyleTTS2ModelVoice(name="f-us-1", language="en-us", gender="female"),
-    StyleTTS2ModelVoice(name="f-us-2", language="en-us", gender="female"),
-    StyleTTS2ModelVoice(name="f-us-3", language="en-us", gender="female"),
-    StyleTTS2ModelVoice(name="f-us-4", language="en-us", gender="female"),
-    StyleTTS2ModelVoice(name="m-us-1", language="en-us", gender="male"),
-    StyleTTS2ModelVoice(name="m-us-2", language="en-us", gender="male"),
-    StyleTTS2ModelVoice(name="m-us-3", language="en-us", gender="male"),
-    StyleTTS2ModelVoice(name="m-us-4", language="en-us", gender="male"),
+    StyleTTS2ModelVoice(name="female_anna", language="en-us", gender="female"),
+    StyleTTS2ModelVoice(name="female_default", language="en-us", gender="female"),
+    StyleTTS2ModelVoice(name="female_emily", language="en-us", gender="female"),
+    StyleTTS2ModelVoice(name="female_lisa", language="en-us", gender="female"),
+    StyleTTS2ModelVoice(name="female_sarah", language="en-us", gender="female"),
+    StyleTTS2ModelVoice(name="male_gavin", language="en-us", gender="male"),
+    StyleTTS2ModelVoice(name="male_jakez", language="en-us", gender="male"),
+    StyleTTS2ModelVoice(name="male_john", language="en-us", gender="male"),
+    StyleTTS2ModelVoice(name="male_nima", language="en-us", gender="male"),
+    StyleTTS2ModelVoice(name="male_old", language="en-us", gender="male"),
+    StyleTTS2ModelVoice(name="male_robert", language="en-us", gender="male"),
+    StyleTTS2ModelVoice(name="male_thomas", language="en-us", gender="male"),
+    StyleTTS2ModelVoice(name="male_vinay", language="en-us", gender="male"),
+    StyleTTS2ModelVoice(name="male_yinghao", language="en-us", gender="male"),
 ]
 
 
@@ -73,7 +79,7 @@ class StyleTTS2Model(Model):
 hf_model_filter = HfModelFilter(
     library_name=LIBRARY_NAME,
     task=TASK_NAME_TAG,
-    tags=TAGS,
+    tags={"styletts2"},  # Only require styletts2 tag, not speaches
 )
 
 
@@ -85,7 +91,7 @@ class StyleTTS2ModelRegistry(ModelRegistry):
         # For now, we'll just yield the main StyleTTS2 model
         # In the future, this could be expanded to discover more models
         yield StyleTTS2Model(
-            id="yl4579/StyleTTS2-LibriTTS",
+            id="jakezp/StyleTTS2-LibriTTS",
             created=0,  # Unknown creation date
             owned_by="yl4579",
             language=["en", "multi"],  # Supports multiple languages

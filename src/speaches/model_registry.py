@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from typing import Generic, TypeVar
 
 from speaches.api_types import Model
 from speaches.hf_utils import (
@@ -6,7 +7,11 @@ from speaches.hf_utils import (
 )
 
 
-class ModelRegistry[ModelT: Model, ModelFilesT]:
+ModelT = TypeVar('ModelT', bound=Model)
+ModelFilesT = TypeVar('ModelFilesT')
+
+
+class ModelRegistry(Generic[ModelT, ModelFilesT]):
     def __init__(self, hf_model_filter: HfModelFilter) -> None:
         self.hf_model_filter = hf_model_filter
 

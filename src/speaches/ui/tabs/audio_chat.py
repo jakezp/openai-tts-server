@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, TypeAlias
 
 import gradio as gr
 from openai import AsyncOpenAI, AsyncStream
@@ -37,7 +37,7 @@ from speaches.ui.utils import openai_client_from_gradio_req
 logger = logging.getLogger(__name__)
 
 
-type Modality = Literal["text", "audio"]
+Modality: TypeAlias = Literal["text", "audio"]
 
 OUTPUT_AUDIO_SAMPLE_RATE = 24000  # FIXME: there's got to be a better way to handle this
 

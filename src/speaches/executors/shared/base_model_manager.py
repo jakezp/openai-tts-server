@@ -6,7 +6,7 @@ import gc
 import logging
 import threading
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -34,7 +34,10 @@ def get_ort_providers_with_options(ort_opts: OrtOptions) -> list[tuple[str, dict
     return available_providers_with_opts
 
 
-class SelfDisposingModel[T]:
+T = TypeVar('T')
+
+
+class SelfDisposingModel(Generic[T]):
     def __init__(
         self,
         model_id: str,
@@ -109,7 +112,7 @@ class SelfDisposingModel[T]:
         self._decrement_ref()
 
 
-class BaseModelManager[T](ABC):
+class BaseModelManager(ABC, Generic[T]):
     def __init__(self, ttl: int) -> None:
         self.ttl = ttl
         self.loaded_models: OrderedDict[str, SelfDisposingModel[T]] = OrderedDict()

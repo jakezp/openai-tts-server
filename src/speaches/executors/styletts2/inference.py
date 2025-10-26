@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 from speaches.executors.styletts2.models import build_model, load_ASR_models, load_F0_models
 from speaches.executors.styletts2.modules.diffusion.sampler import ADPM2Sampler, DiffusionSampler, KarrasSchedule
 from speaches.executors.styletts2.text_utils import TextCleaner
-from speaches.executors.styletts2.utils import recursive_munch
+from speaches.executors.styletts2.utils import recursive_munch  # Import from utils.py file
 from speaches.executors.styletts2.utils.plbert.util import load_plbert
 
 logger = logging.getLogger(__name__)
@@ -130,17 +130,136 @@ class StyleTTS2:
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        # Load pretrained ASR model
-        asr_config_path = config.get("ASR_config", False)
-        asr_path = config.get("ASR_path", False)
+        # Download utility models from GitHub repository
+        def _download_github_file(github_url: str, local_path: Path) -> str:
+            """Download a file from GitHub repository."""
+            import urllib.request
+            
+            # Convert GitHub tree URL to raw file URL
+            raw_url = github_url.replace("github.com", "raw.githubusercontent.com").replace("/tree/main/", "/main/")
+            
+            # Create directory if it doesn't exist
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            logger.info(f"Downloading {raw_url} -> {local_path}")
+            urllib.request.urlretrieve(raw_url, local_path)
+            return str(local_path)
+
+        def _get_utility_model_path(hf_path: str) -> str | None:
+            """Get utility model path by downloading from GitHub if needed."""
+            if not hf_path:
+                return None
+            
+            if hf_path.startswith("Utils/"):
+                current_dir = Path(__file__).parent  
+                relative_path = hf_path[6:]  # Remove "Utils/" prefix
+                
+                # Handle directories (like PLBERT/)
+                if hf_path.endswith("/"):
+                    return _get_utility_directory(hf_path, relative_path.rstrip("/").lower())
+                
+                # Handle files
+                cache_path = Path.home() / ".cache" / "styletts2" / relative_path.lower()
+                
+                # If cached and not an LFS pointer, use it
+                if cache_path.exists() and cache_path.stat().st_size > 1000:
+                    logger.info(f"Using cached utility model: {cache_path}")
+                    return str(cache_path)
+                
+                # Download from GitHub
+                try:
+                    github_base = "https://github.com/yl4579/StyleTTS2/tree/main"
+                    github_url = f"{github_base}/{hf_path}"
+                    
+                    # Convert to raw URL for download
+                    raw_url = github_url.replace("github.com", "raw.githubusercontent.com").replace("/tree/main/", "/main/")
+                    
+                    cache_path.parent.mkdir(parents=True, exist_ok=True)
+                    logger.info(f"Downloading utility model from GitHub: {raw_url}")
+                    
+                    import urllib.request
+                    urllib.request.urlretrieve(raw_url, cache_path)
+                    
+                    logger.info(f"Downloaded utility model: {hf_path} -> {cache_path}")
+                    return str(cache_path)
+                    
+                except Exception as e:
+                    logger.error(f"Failed to download {hf_path} from GitHub: {e}")
+                    
+                    # Try local fallback for development
+                    fallback_path = current_dir / "utils" / relative_path.lower()
+                    if fallback_path.exists() and fallback_path.stat().st_size > 1000:
+                        logger.warning(f"Using local fallback: {fallback_path}")
+                        return str(fallback_path)
+                    else:
+                        logger.error(f"Utility model not available: {hf_path}")
+                        return None
+            
+            return hf_path
+
+        def _get_utility_directory(full_path: str, dir_name: str) -> str | None:
+            """Download and cache an entire utility directory from GitHub."""
+            cache_dir = Path.home() / ".cache" / "styletts2" / dir_name
+            
+            # Define required files for each directory
+            if dir_name == "plbert":
+                required_files = [
+                    'config.yml',
+                    'step_1000000.t7', 
+                    'util.py'
+                ]
+            else:
+                logger.error(f"Unknown utility directory: {dir_name}")
+                return None
+            
+            # Check if all files exist in cache
+            all_cached = all((cache_dir / filename).exists() for filename in required_files)
+            
+            if all_cached:
+                logger.info(f"Using cached directory: {cache_dir}")
+                return str(cache_dir)
+            
+            # Download missing files
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            
+            for filename in required_files:
+                file_path = cache_dir / filename
+                if not file_path.exists():
+                    try:
+                        url = f"https://raw.githubusercontent.com/yl4579/StyleTTS2/main/{full_path}{filename}"
+                        logger.info(f"Downloading {filename} from GitHub...")
+                        
+                        import urllib.request
+                        urllib.request.urlretrieve(url, file_path)
+                        logger.info(f"Downloaded: {file_path}")
+                        
+                    except Exception as e:
+                        logger.error(f"Failed to download {filename}: {e}")
+                        # Try fallback to local file
+                        current_dir = Path(__file__).parent
+                        local_file = current_dir / "utils" / dir_name / filename
+                        if local_file.exists():
+                            import shutil
+                            shutil.copy2(local_file, file_path)
+                            logger.info(f"Copied from local: {file_path}")
+                        else:
+                            logger.error(f"Cannot download or find local file: {filename}")
+                            return None
+            
+            logger.info(f"Directory ready: {cache_dir}")
+            return str(cache_dir)
+
+        # Load utility models (download from GitHub if needed)
+        asr_config_path = _get_utility_model_path(config.get("ASR_config", False))
+        asr_path = _get_utility_model_path(config.get("ASR_path", False))
         self.text_aligner = load_ASR_models(asr_path, asr_config_path)
 
-        # Load pretrained F0 model
-        f0_path = config.get("F0_path", False)
+        # Load pretrained F0 model  
+        f0_path = _get_utility_model_path(config.get("F0_path", False))
         self.pitch_extractor = load_F0_models(f0_path)
 
         # Load BERT model
-        bert_path = config.get("PLBERT_dir", False)
+        bert_path = _get_utility_model_path(config.get("PLBERT_dir", False))
         self.plbert = load_plbert(bert_path)
 
         # Build model
@@ -209,7 +328,9 @@ class StyleTTS2:
         Returns:
             Style embedding tensor
         """
-        wave, sr = librosa.load(audio_path, sr=SAMPLE_RATE)
+        # Convert Path to string for librosa compatibility
+        audio_path_str = str(audio_path) if isinstance(audio_path, Path) else audio_path
+        wave, sr = librosa.load(audio_path_str, sr=SAMPLE_RATE)
         audio, _ = librosa.effects.trim(wave, top_db=30)
         if sr != SAMPLE_RATE:
             audio = librosa.resample(audio, orig_sr=sr, target_sr=SAMPLE_RATE)

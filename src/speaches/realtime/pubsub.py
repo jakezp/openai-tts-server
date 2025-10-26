@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator
 import json
 import logging
 from pathlib import Path
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 
@@ -11,7 +12,10 @@ from speaches.types.realtime import CLIENT_EVENT_TYPES, SERVER_EVENT_TYPES, Even
 logger = logging.getLogger(__name__)
 
 
-class PubSub[T: BaseModel]:
+T = TypeVar('T', bound=BaseModel)
+
+
+class PubSub(Generic[T]):
     def __init__(self) -> None:
         self.subscribers: set[Queue[T]] = set()
         self.events: list[T] = []  # to store all events

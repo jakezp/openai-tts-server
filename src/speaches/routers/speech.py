@@ -1,5 +1,5 @@
 import logging
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import StreamingResponse
@@ -25,7 +25,7 @@ DEFAULT_RESPONSE_FORMAT = "mp3"
 OPENAI_SUPPORTED_SPEECH_VOICE_NAMES = ("alloy", "ash", "ballad", "coral", "echo", "sage", "shimmer", "verse")
 
 # https://platform.openai.com/docs/guides/text-to-speech/supported-output-formats
-type ResponseFormat = Literal["mp3", "flac", "wav", "pcm"]
+ResponseFormat: TypeAlias = Literal["mp3", "flac", "wav", "pcm"]
 SUPPORTED_RESPONSE_FORMATS = ("mp3", "flac", "wav", "pcm")
 SUPPORTED_NON_STREAMABLE_RESPONSE_FORMATS = ("flac", "wav")
 UNSUPORTED_RESPONSE_FORMATS = ("opus", "aac")
@@ -157,7 +157,7 @@ async def synthesize(  # noqa: C901
                 )
         
         # Generate audio using StyleTTS2
-        from speaches.executors import styletts2 as styletts2_module
+        import speaches.executors.styletts2 as styletts2_module
         
         audio_generator = styletts2_module.generate_audio_sync(
             model_manager=executor.model_manager,

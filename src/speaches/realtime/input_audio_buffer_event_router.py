@@ -1,7 +1,7 @@
 import base64
 from io import BytesIO
 import logging
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from faster_whisper.transcribe import get_speech_timestamps
 from faster_whisper.vad import VadOptions
@@ -43,7 +43,7 @@ empty_input_audio_buffer_commit_error = Error(
     message="Error committing input audio buffer: the buffer is empty.",
 )
 
-type SpeechTimestamp = dict[Literal["start", "end"], int]
+SpeechTimestamp: TypeAlias = dict[Literal["start", "end"], int]
 
 
 # NOTE: `signal.resample_poly` **might** be a better option for resampling audio data
