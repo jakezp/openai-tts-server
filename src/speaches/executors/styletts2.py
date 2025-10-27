@@ -25,6 +25,7 @@ from speaches.executors.styletts2.registry import (
     PRESET_VOICES,
     StyleTTS2ModelRegistry,
     StyleTTS2ModelVoice,
+    discover_preset_voices,
     styletts2_model_registry,
 )
 
@@ -42,6 +43,11 @@ def create_styletts2_executor(config: Config) -> Executor:
     if not voices_dir.exists():
         raise RuntimeError(f"Voices directory not found: {voices_dir}")
 
+    # Dynamically discover preset voices from the voices directory
+    discovered_voices = discover_preset_voices(voices_dir)
+    PRESET_VOICES.clear()
+    PRESET_VOICES.extend(discovered_voices)
+    
     model_manager = StyleTTS2ModelManager(config=config, voices_dir=voices_dir)
 
     return Executor(

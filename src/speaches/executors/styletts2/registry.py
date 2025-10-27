@@ -48,23 +48,51 @@ class StyleTTS2ModelVoice(BaseModel):
         return self.name
 
 
-# Preset voices for StyleTTS2-LibriTTS model
-PRESET_VOICES = [
-    StyleTTS2ModelVoice(name="female_anna", language="en-us", gender="female"),
-    StyleTTS2ModelVoice(name="female_default", language="en-us", gender="female"),
-    StyleTTS2ModelVoice(name="female_emily", language="en-us", gender="female"),
-    StyleTTS2ModelVoice(name="female_lisa", language="en-us", gender="female"),
-    StyleTTS2ModelVoice(name="female_sarah", language="en-us", gender="female"),
-    StyleTTS2ModelVoice(name="male_gavin", language="en-us", gender="male"),
-    StyleTTS2ModelVoice(name="male_jakez", language="en-us", gender="male"),
-    StyleTTS2ModelVoice(name="male_john", language="en-us", gender="male"),
-    StyleTTS2ModelVoice(name="male_nima", language="en-us", gender="male"),
-    StyleTTS2ModelVoice(name="male_old", language="en-us", gender="male"),
-    StyleTTS2ModelVoice(name="male_robert", language="en-us", gender="male"),
-    StyleTTS2ModelVoice(name="male_thomas", language="en-us", gender="male"),
-    StyleTTS2ModelVoice(name="male_vinay", language="en-us", gender="male"),
-    StyleTTS2ModelVoice(name="male_yinghao", language="en-us", gender="male"),
-]
+def discover_preset_voices(voices_dir: Path) -> list[StyleTTS2ModelVoice]:
+    """
+    Dynamically discover preset voices from the voices directory.
+    
+    Args:
+        voices_dir: Path to the voices directory containing .wav files
+        
+    Returns:
+        List of StyleTTS2ModelVoice objects discovered from filenames
+    """
+    voices = []
+    
+    if not voices_dir.exists():
+        logger.warning(f"Voices directory not found: {voices_dir}")
+        return voices
+    
+    # Scan for .wav files
+    for voice_file in sorted(voices_dir.glob("*.wav")):
+        # Extract name (e.g., "female_anna.wav" -> "female_anna")
+        voice_name = voice_file.stem
+        
+        # Determine gender from filename prefix
+        gender: Literal["male", "female"] | None = None
+        if voice_name.startswith("female_"):
+            gender = "female"
+        elif voice_name.startswith("male_"):
+            gender = "male"
+        
+        # All current voices are English (can be extended later)
+        language = "en-us"
+        
+        voices.append(
+            StyleTTS2ModelVoice(
+                name=voice_name,
+                language=language,
+                gender=gender,
+            )
+        )
+    
+    logger.info(f"Discovered {len(voices)} preset voices from {voices_dir}")
+    return voices
+
+
+# Global PRESET_VOICES - will be populated when the voices_dir is known
+PRESET_VOICES: list[StyleTTS2ModelVoice] = []
 
 
 class StyleTTS2Model(Model):

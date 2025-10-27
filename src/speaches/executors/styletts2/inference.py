@@ -61,6 +61,85 @@ LANG_NAMES = {
     "tr": "turkish",
 }
 
+# Language code normalization mapping for espeak compatibility
+# Maps common variants to espeak-supported codes
+ESPEAK_LANG_MAP = {
+    # English variants - espeak supports these natively
+    "en": "en-us",
+    "en-us": "en-us",
+    "en_us": "en-us",
+    "en-gb": "en-gb",
+    "en_gb": "en-gb",
+    "en-029": "en-029",  # Caribbean
+    "en-scotland": "en-gb-scotland",
+    "en-gb-scotland": "en-gb-scotland",
+    # Other languages
+    "cs": "cs",
+    "da": "da",
+    "nl": "nl",
+    "et": "et",
+    "fi": "fi",
+    "fr": "fr-fr",
+    "fr-fr": "fr-fr",
+    "fr_fr": "fr-fr",
+    "fr-be": "fr-be",
+    "fr_be": "fr-be",
+    "fr-ch": "fr-ch",
+    "fr_ch": "fr-ch",
+    "de": "de",
+    "el": "el",
+    "it": "it",
+    "no": "nb",
+    "nb": "nb",
+    "pl": "pl",
+    "pt": "pt",
+    "pt-br": "pt-br",
+    "pt_br": "pt-br",
+    "ru": "ru",
+    "sl": "sl",
+    "es": "es",
+    "es-419": "es-419",
+    "es_419": "es-419",
+    "sv": "sv",
+    "tr": "tr",
+}
+
+
+def normalize_language_code(lang: str) -> str:
+    """
+    Normalize language codes to espeak-compatible format.
+    
+    Handles variants like:
+    - en_us, en-us -> en-us
+    - en_gb, en-gb -> en-gb (preserves British English)
+    - fr_fr, fr-fr -> fr-fr
+    - pt_br, pt-br -> pt-br
+    - etc.
+    
+    Args:
+        lang: Language code (e.g., "en-us", "en_US", "en-gb", "fr-fr")
+        
+    Returns:
+        Normalized espeak-compatible language code
+    """
+    # Convert to lowercase and replace underscores with hyphens
+    lang = lang.lower().replace("_", "-")
+    
+    # Check if it's already in our mapping
+    if lang in ESPEAK_LANG_MAP:
+        return ESPEAK_LANG_MAP[lang]
+    
+    # Try extracting just the base language code (e.g., "en" from "en-au")
+    # Only fallback to base if we don't have a specific variant
+    if "-" in lang:
+        base_lang = lang.split("-")[0]
+        if base_lang in ESPEAK_LANG_MAP:
+            return ESPEAK_LANG_MAP[base_lang]
+    
+    # Default to en-us if completely unknown
+    return "en-us"
+
+
 SAMPLE_RATE = 24000
 
 
@@ -370,6 +449,9 @@ class StyleTTS2:
         """
         text = text.strip()
 
+        # Normalize language code for espeak compatibility
+        normalized_lang = normalize_language_code(lang)
+
         # Handle IPA phonemes within brackets []
         ipa_pattern = r"\[[^\]]*\]"
         text = text.replace("[]", "")
@@ -380,12 +462,14 @@ class StyleTTS2:
             text = re.sub(ipa_pattern, "[]", text, 0, re.MULTILINE)
 
         # Phonemize text based on language
-        if lang in LANG_NAMES:
+        if normalized_lang in LANG_NAMES or lang in LANG_NAMES:
+            # Use original lang for LANG_NAMES lookup, normalized_lang for espeak
+            lang_name = LANG_NAMES.get(lang, LANG_NAMES.get(normalized_lang, "english"))
             local_phonemizer = phonemizer.backend.EspeakBackend(
-                language=lang, preserve_punctuation=True, with_stress=True
+                language=normalized_lang, preserve_punctuation=True, with_stress=True
             )
             ps = local_phonemizer.phonemize([text])
-            ps = word_tokenize(ps[0], language=LANG_NAMES[lang])
+            ps = word_tokenize(ps[0], language=lang_name)
             ps = " ".join(ps)
         elif lang == "jb":
             # Lojban language support
