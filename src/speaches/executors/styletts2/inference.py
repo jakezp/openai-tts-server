@@ -140,6 +140,48 @@ def normalize_language_code(lang: str) -> str:
     return "en-us"
 
 
+def split_into_sentences(text: str, max_tokens: int = 400) -> list[str]:
+    """
+    Split text into sentences, ensuring each chunk is under max_tokens.
+    Uses NLTK sentence tokenizer for proper sentence boundary detection.
+    
+    Args:
+        text: Text to split
+        max_tokens: Maximum tokens per chunk (BERT max is 512, use 400 for safety)
+        
+    Returns:
+        List of text chunks
+    """
+    # Try to split by sentences first
+    try:
+        sentences = nltk.sent_tokenize(text)
+    except LookupError:
+        # Fallback to simple split if NLTK data not available
+        sentences = text.replace("! ", "!|").replace("? ", "?|").replace(". ", ".|").split("|")
+    
+    chunks = []
+    current_chunk = ""
+    
+    for sentence in sentences:
+        # Conservative estimate: 1 token ≈ 0.9 characters for phoneme-based tokenization
+        # (BERT's phoneme tokenizer creates more tokens than word tokenizers)
+        estimated_tokens = int(len(current_chunk + sentence) * 0.9)
+        
+        if estimated_tokens > max_tokens and current_chunk:
+            # Current chunk is full, save it and start new one
+            chunks.append(current_chunk.strip())
+            current_chunk = sentence
+        else:
+            # Add sentence to current chunk
+            current_chunk += (" " if current_chunk else "") + sentence
+    
+    # Add remaining chunk
+    if current_chunk:
+        chunks.append(current_chunk.strip())
+    
+    return chunks if chunks else [text]  # Return original text if splitting failed
+
+
 SAMPLE_RATE = 24000
 
 
@@ -451,6 +493,7 @@ class StyleTTS2:
 
         # Normalize language code for espeak compatibility
         normalized_lang = normalize_language_code(lang)
+        logger.debug(f"Language normalization: '{lang}' -> '{normalized_lang}'")
 
         # Handle IPA phonemes within brackets []
         ipa_pattern = r"\[[^\]]*\]"
@@ -552,3 +595,76 @@ class StyleTTS2:
         # Remove artifact at the end
         audio = out.squeeze().cpu().numpy()[..., :-50]
         return audio, ps
+
+    def synthesize_long_form(
+        self,
+        text: str,
+        ref_style: torch.Tensor,
+        lang: str = "en-us",
+        alpha: float = 0.3,
+        beta: float = 0.7,
+        diffusion_steps: int = 5,
+        embedding_scale: float = 1.0,
+        max_tokens: int = 300,
+    ) -> tuple[np.ndarray, str]:
+        """
+        Synthesize speech from long-form text by splitting into chunks.
+        
+        This method handles text longer than BERT's 512 token limit by:
+        1. Splitting text into sentence-based chunks
+        2. Synthesizing each chunk separately
+        3. Concatenating the audio outputs
+        
+        Args:
+            text: Input text to synthesize (can be very long)
+            ref_style: Reference style embedding
+            lang: Language code
+            alpha: Style blending factor
+            beta: Style mixing factor
+            diffusion_steps: Number of diffusion steps (3-15)
+            embedding_scale: Embedding scale factor
+            max_tokens: Maximum tokens per chunk (default 400, BERT max is 512)
+            
+        Returns:
+            Tuple of (concatenated audio waveform, concatenated IPA phonemes)
+        """
+        # Split text into manageable chunks
+        chunks = split_into_sentences(text, max_tokens=max_tokens)
+        
+        logger.debug(f"Split text into {len(chunks)} chunks for long-form synthesis")
+        
+        # Synthesize each chunk
+        audio_segments = []
+        ipa_segments = []
+        
+        for i, chunk in enumerate(chunks):
+            logger.debug(f"Synthesizing chunk {i+1}/{len(chunks)}: {len(chunk)} chars")
+            audio, ipa = self.synthesize(
+                text=chunk,
+                ref_style=ref_style,
+                lang=lang,
+                alpha=alpha,
+                beta=beta,
+                diffusion_steps=diffusion_steps,
+                embedding_scale=embedding_scale,
+            )
+            audio_segments.append(audio)
+            ipa_segments.append(ipa)
+        
+        # Concatenate all audio segments
+        if len(audio_segments) == 1:
+            return audio_segments[0], ipa_segments[0]
+        
+        # Add small silence between chunks (0.1 seconds = 2400 samples at 24kHz)
+        silence = np.zeros(int(SAMPLE_RATE * 0.1))
+        concatenated_audio = audio_segments[0]
+        for audio in audio_segments[1:]:
+            concatenated_audio = np.concatenate([concatenated_audio, silence, audio])
+        
+        # Concatenate IPA with space separator
+        concatenated_ipa = " ".join(ipa_segments)
+        
+        logger.info(f"Long-form synthesis complete: {len(chunks)} chunks, {len(concatenated_audio)/SAMPLE_RATE:.2f}s total")
+        
+        return concatenated_audio, concatenated_ipa
+

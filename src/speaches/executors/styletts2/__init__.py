@@ -63,8 +63,8 @@ def generate_audio_sync(
             # Preset voice
             ref_style = model_manager.get_voice_style(styletts2_model, voice)
 
-        # Synthesize audio
-        audio_data, ipa = styletts2_model.synthesize(
+        # Synthesize audio (using long-form synthesis to handle text >512 tokens)
+        audio_data, ipa = styletts2_model.synthesize_long_form(
             text=text,
             ref_style=ref_style,
             lang=lang,

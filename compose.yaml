@@ -10,6 +10,11 @@ services:
     restart: unless-stopped
     ports:
       - 8000:8000
+    volumes:
+      # Mount local HuggingFace cache to persist downloaded models
+      - ${HF_HOME:-~/.cache/huggingface}:/home/ubuntu/.cache/huggingface
+      # Mount voices directory for StyleTTS2
+      - ./voices:/home/ubuntu/speaches/voices:ro
     develop:
       watch:
         - action: rebuild

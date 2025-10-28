@@ -32,7 +32,7 @@ dependencies = [
     "phonemizer>=3.2.0",
     "nltk>=3.8.0",
     "munch>=2.5.0",
-    "monotonic-align>=0.1.0",
+    # "monotonic-align>=0.1.0",  # Disabled: incompatible with Python 3.12, not needed for inference
     "scipy>=1.10.0",
     "matplotlib>=3.7.0",
     "einops>=0.7.0",
@@ -186,6 +186,6 @@ requires-dist = ["piper-phonemize"]
 
 [tool.uv.workspace]
 members = [
-    "packages/speaches-cli",
+    # "packages/speaches-cli",  # Temporarily excluded due to Python 3.12 requirement
     # "misc/onnx_export",
 ]

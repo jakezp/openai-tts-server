@@ -139,6 +139,13 @@ async def synthesize(  # noqa: C901
                 )
             return StreamingResponse(audio_generator, media_type=f"audio/{body.response_format}")
     elif isinstance(executor.model_manager, StyleTTS2ModelManager):
+        # Log incoming request for debugging
+        logger.debug(
+            f"StyleTTS2 request - model: {body.model}, voice: {body.voice}, lang: {body.lang}, "
+            f"input_length: {len(body.input)}, alpha: {body.alpha}, beta: {body.beta}, "
+            f"diffusion_steps: {body.diffusion_steps}, speed: {body.speed}"
+        )
+        
         # StyleTTS2 doesn't support speed parameter in the same way
         if body.speed != 1.0:
             logger.warning(f"StyleTTS2 does not support speed parameter, ignoring speed={body.speed}")

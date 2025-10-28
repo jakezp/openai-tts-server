@@ -1,5 +1,13 @@
-from monotonic_align import maximum_path
-from monotonic_align.core import maximum_path_c
+try:
+    # monotonic_align is only needed for training, not inference
+    # It's also incompatible with Python 3.12+
+    from monotonic_align import maximum_path as _maximum_path_unused  # noqa: F401
+    from monotonic_align.core import maximum_path_c
+    HAS_MONOTONIC_ALIGN = True
+except ImportError:
+    HAS_MONOTONIC_ALIGN = False
+    maximum_path_c = None
+
 import numpy as np
 import torch
 import copy
@@ -15,7 +23,15 @@ def maximum_path(neg_cent, mask):
     """Cython optimized version.
     neg_cent: [b, t_t, t_s]
     mask: [b, t_t, t_s]
+    
+    Note: This function is only used during training, not inference.
     """
+    if not HAS_MONOTONIC_ALIGN:
+        raise RuntimeError(
+            "monotonic_align is required for training but not installed. "
+            "This function is not needed for inference."
+        )
+    
     device = neg_cent.device
     dtype = neg_cent.dtype
     neg_cent = np.ascontiguousarray(neg_cent.data.cpu().numpy().astype(np.float32))

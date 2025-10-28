@@ -2,14 +2,16 @@
 #   - compose.observability.yaml
 services:
   speaches:
+    container_name: speaches-cpu
     extends:
       file: compose.yaml
       service: speaches
-    image: ghcr.io/speaches-ai/speaches:latest-cpu
-    build:
-      args:
-        BASE_IMAGE: ubuntu:24.04
+    # Use locally built image instead of pulling from registry
+    # Build with: docker build --platform linux/arm64 -t openai-tts-server:cpu -f Dockerfile.cpu .
+    image: openai-tts-server:cpu
+    # Don't include build config here to avoid multi-platform issues from compose.yaml
     volumes:
-      - hf-hub-cache:/home/ubuntu/.cache/huggingface/hub
-volumes:
-  hf-hub-cache:
+      # Override to use local HuggingFace cache instead of named volume
+      - ${HF_HOME:-~/.cache/huggingface}:/home/ubuntu/.cache/huggingface
+      # Mount voices directory for StyleTTS2
+      - ./voices:/home/ubuntu/speaches/voices:ro

@@ -12,6 +12,7 @@ from speaches.executors.piper import PiperModelManager, piper_model_registry
 from speaches.executors.pyannote import PyannoteModelManager, pyannote_model_registry
 from speaches.executors.shared.executor import Executor
 from speaches.executors.whisper import WhisperModelManager, whisper_model_registry
+from speaches.executors.styletts2.registry import discover_preset_voices, PRESET_VOICES
 
 
 class ExecutorRegistry:
@@ -44,8 +45,16 @@ class ExecutorRegistry:
         # Initialize StyleTTS2 executor
         from speaches.executors.styletts2.model_manager import StyleTTS2ModelManager
         from speaches.executors.styletts2.registry import styletts2_model_registry
-        
+        # Ensure PRESET_VOICES is populated by scanning the voices directory
         voices_dir = Path(__file__).parent.parent.parent.parent.parent / "voices"
+        try:
+            discovered = discover_preset_voices(voices_dir)
+            PRESET_VOICES.clear()
+            PRESET_VOICES.extend(discovered)
+        except Exception:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.exception("Failed to discover preset voices")
         self._styletts2_executor = Executor(
             name="styletts2",
             model_manager=StyleTTS2ModelManager(config=config, voices_dir=voices_dir),
